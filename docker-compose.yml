@@ -1,0 +1,75 @@
+version: '3.8'
+
+services:
+  openhands:
+    image: docker.all-hands.dev/all-hands-ai/openhands:main
+    container_name: openhands
+    pull_policy: always
+    restart: unless-stopped
+    environment:
+      - SANDBOX_RUNTIME_CONTAINER_IMAGE=docker.all-hands.dev/all-hands-ai/runtime:main
+      - LOG_ALL_EVENTS=true
+    env_file:
+      - .env
+    ports:
+      - "${OPENHANDS_PORT:-3000}:3000"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ${WORKSPACE_DIR:-./workspace}:/opt/workspace_base
+      - ${OPENHANDS_STATE_DIR:-./openhands-state}:/.openhands-state
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+  # Optional: Ollama for local LLM with GPU support
+  ollama:
+    image: ollama/ollama:latest
+    container_name: ollama
+    pull_policy: always
+    restart: unless-stopped
+    ports:
+      - "${OLLAMA_PORT:-11434}:11434"
+    volumes:
+      - ${OLLAMA_MODELS_DIR:-./ollama-models}:/root/.ollama
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+    profiles:
+      - ollama
+
+  # Optional: LocalAI for running various models with GPU
+  localai:
+    image: localai/localai:latest-aio-gpu-nvidia-cuda-12
+    container_name: localai
+    restart: unless-stopped
+    ports:
+      - "${LOCALAI_PORT:-8080}:8080"
+    volumes:
+      - ${LOCALAI_MODELS_DIR:-./localai-models}:/models
+    environment:
+      - DEBUG=true
+      - THREADS=${LOCALAI_THREADS:-4}
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+    profiles:
+      - localai
+
+volumes:
+  openhands-state:
+  ollama-models:
+  localai-models:

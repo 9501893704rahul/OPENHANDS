@@ -1,0 +1,26 @@
+# Environment files with secrets
+.env
+
+# Data directories
+workspace/
+openhands-state/
+ollama-models/
+localai-models/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE
+.idea/
+*.swp
+*.swo
+*~
+
+# Logs
+*.log
+logs/
+
+# Temporary files
+*.tmp
+*.temp
